@@ -157,3 +157,25 @@ class NimKernel(Kernel):
     def do_shutdown(self, restart):
         """Cleanup the created source code files and executables when shutting down the kernel"""
         self.cleanup_files()
+
+    def do_complete(self, code, cursor_pos):
+        ws = set('\n\r\t ')
+        lf = set('\n\r')
+        sw = cursor_pos
+        while sw > 0 and code[sw - 1] not in ws:
+            sw -= 1
+        sl = sw
+        while sl > 0 and code[sl - 1] not in lf:
+            sl -= 1
+        wrd = code[sw:cursor_pos]
+#        lin = code[sl:cursor_pos]
+        # TODO: nimsuggest??
+        r = 'addr and as asm atomic bind block break case cast concept ' \
+            'const continue converter defer discard distinct div do ' \
+            'elif else end enum except export finally for from func ' \
+            'generic if import in include interface is isnot iterator ' \
+            'let macro method mixin mod nil not notin object of or out ' \
+            'proc ptr raise ref return shl shr static template try ' \
+            'tuple type using var when while with without xor yield'.split()
+        return {'status': 'ok', 'matches': [t for t in r if t.startswith(wrd)],
+                'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
