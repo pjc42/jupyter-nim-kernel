@@ -20,10 +20,10 @@ class RealTimeSubprocess(subprocess.Popen):
         """
         #fsa = open('C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-nim-kernel\\tt.txt','a')
         #fsa.write(str(cmd))
-        
+
         self._write_to_stdout = write_to_stdout
         self._write_to_stderr = write_to_stderr
-              
+
         super().__init__(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
 
         self._stdout_queue = Queue()
@@ -66,6 +66,8 @@ class RealTimeSubprocess(subprocess.Popen):
         if stderr_contents:
             self._write_to_stderr(stderr_contents)
 
+class MyRandomSequence(tempfile._RandomNameSequence):
+    characters = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 class NimKernel(Kernel):
     implementation = 'jupyter_nim_kernel'
@@ -100,8 +102,13 @@ class NimKernel(Kernel):
         # We don't want the file to be deleted when closed, but only when the kernel stops
         kwargs['delete'] = False
         kwargs['mode'] = 'w'
+        kwargs['prefix'] = 'nim'
+
+        # only names which are ok for nim modules
+        tempfile._name_sequence = MyRandomSequence()
+
         file = tempfile.NamedTemporaryFile(**kwargs)
-        self.files.append(file.name)        
+        self.files.append(file.name)
         return file
 
     def _write_to_stdout(self, contents):
@@ -118,7 +125,7 @@ class NimKernel(Kernel):
     def compile_with_nimc(self, source_filename, binary_filename):
         #args = ['gcc', source_filename, '-std=c11', '-fPIC', '-shared', '-rdynamic', '-o', binary_filename]
         obf = '-o:'+binary_filename
-        args = ['nim', 'c', '--verbosity:0','-t:-fPIC','-t:-shared', obf, source_filename]
+        args = ['nim', 'c', '--hint[Processing]:off', '--verbosity:0', '-t:-fPIC', '-t:-shared', obf, source_filename]
         return self.create_jupyter_subprocess(args)
 
     def do_execute(self, code, silent, store_history=True,
