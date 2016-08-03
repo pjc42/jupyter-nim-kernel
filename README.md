@@ -33,14 +33,18 @@ with [nim](nim-lang.org).
 This a simple proof of concept. It's not intended to be used in production in its current shape.   
 
 ## Known bugs
-- The output is littered with `Hint: [Processing]...` statements, despite using `--verbosity:0`
+- The output is littered with `Hint: [Processing]...` statements
 - Every block is treated as a separate file ( not really a bug, it's just not yet implemented )
 - Others?
 
 ## License
 [MIT](LICENSE.txt)
 
-##Changelog
+## TODO
+- have a look at implementing [nimsuggest](https://github.com/nim-lang/nimsuggest)
+- share context between blocks ( or at least procs, maybe an internal file that adds all procs and then is included before compilation? )
+
+## Changelog
 
 - 03-08-2016 : `stisa` Added some snippets to completion ( e.g. : write `pr` then hit `tab` )
 - 02-08-2016 : `oderwat` Fixed temporary filenames being incompatible with nim
