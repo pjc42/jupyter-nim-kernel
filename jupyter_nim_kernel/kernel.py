@@ -7,6 +7,10 @@ import tempfile
 import os
 import os.path as path
 
+def debug_to_file (msg, filename):
+  fsa = open(filename,'a')
+  fsa.write(str(msg))
+
 class RealTimeSubprocess(subprocess.Popen):
     """
     A subprocess that allows to read its stdout and stderr in real time
@@ -122,19 +126,47 @@ class NimKernel(Kernel):
                                   lambda contents: self._write_to_stdout(contents.decode()),
                                   lambda contents: self._write_to_stderr(contents.decode()))
 
-    def compile_with_nimc(self, source_filename, binary_filename):
+    def compile_with_nimc(self, source_filename, binary_filename,additional=[]):
         #args = ['gcc', source_filename, '-std=c11', '-fPIC', '-shared', '-rdynamic', '-o', binary_filename]
+      #  debug_to_file([str(self.execution_count)+path.basename(f) for f in self.files if f.endswith('.nim')], 'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
         obf = '-o:'+binary_filename
-        args = ['nim', 'c', '--hint[Processing]:off', '--verbosity:0', '-t:-fPIC', '-t:-shared', obf, source_filename]
+        args = ['nim', 'c', '--hint[Processing]:off', '--verbosity:0', '-t:-fPIC', '-t:-shared']+additional+[obf, source_filename]
+        #debug_to_file(args,'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
         return self.create_jupyter_subprocess(args)
 
+    def load_block(self, blockid):
+        if self.execution_count!=blockid:
+                srccontent = open(self.files[blockid-1], 'r').read().replace('echo','#echo') # comment out echos
+                #debug_to_file(srccontent,'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
+                return srccontent
+    
     def do_execute(self, code, silent, store_history=True,
                    user_expressions=None, allow_stdin=False):
+                   
+        other_args=[]
+  
+        magiclines = [l for l in code.split('\n') if l.startswith('#>')]
+        debug_to_file('magiclines\n','C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
+        debug_to_file(magiclines,'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
+        debug_to_file('\n','C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
+        
+        for l in magiclines:
+            # Magic to load a block, takes 1 argument, the execution id of a block
+            if l[0:11]=='#>loadblock':
+                blocktoload = int(l[11:].split()[0])
+             #   debug_to_file(self.load_block(blocktoload),'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
+                code = '\n'+self.load_block(blocktoload)+'\n'+code
+            # Magic to pass flags directly to nim            
+            elif l[0:10]=='#>passflag':
+                other_args.append(l[10:].replace(' ','')) # trim and append to commands
+            debug_to_file(l[0:9],'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
+
+        # Compile code using a temp file
         with self.new_temp_file(suffix='.nim') as source_file:
             source_file.write(code)
             source_file.flush()
             with self.new_temp_file(suffix='.out') as binary_file:
-                p = self.compile_with_nimc(source_file.name, binary_file.name)
+                p = self.compile_with_nimc(source_file.name, binary_file.name, other_args)
                 while p.poll() is None:
                     p.write_contents()
                 p.write_contents()
@@ -145,6 +177,7 @@ class NimKernel(Kernel):
                     return {'status': 'ok', 'execution_count': self.execution_count, 'payload': [],
                             'user_expressions': {}}
 
+        # Run the compiled temp file
         p = self.create_jupyter_subprocess([binary_file.name]) #self.master_path,
         while p.poll() is None:
             p.write_contents()
