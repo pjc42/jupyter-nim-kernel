@@ -170,12 +170,68 @@ class NimKernel(Kernel):
         wrd = code[sw:cursor_pos]
 #        lin = code[sl:cursor_pos]
         # TODO: nimsuggest??
-        r = 'addr and as asm atomic bind block break case cast concept ' \
+        matches = []
+        if 'proc'.startswith(wrd):
+            matches.append("proc name(arg:type):returnType = \n    #proc")
+            #return {'status': 'ok', 'matches': ["proc name(arg:type):returnType = \n    #proc"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}            
+        elif 'if'.startswith(wrd):
+            matches.append("if (expression):\n    #then")
+            #return {'status': 'ok', 'matches': ["if (expression):\n    #then"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+        elif 'method'.startswith(wrd):
+            matches.append("method name(arg:type): returnType = \n    #method")
+            #return {'status': 'ok', 'matches': ["method name(arg:type): returnType = \n    #method"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}            
+        elif 'iterator'.startswith(wrd):
+            matches.append("iterator name(arg:type): returnType = \n    #iterator")
+            #return {'status': 'ok', 'matches': ["iterator name(arg:type): returnType = \n    #iterator"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+        elif 'array'.startswith(wrd):
+            matches.append("array[length, type]")
+            #return {'status': 'ok', 'matches': ["array[length, type]"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+        elif 'seq'.startswith(wrd):
+            matches.append("seq[type]")
+            #return {'status': 'ok', 'matches': ["seq[type]"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+        elif 'for'.startswith(wrd):
+            matches.append("for index in iterable):\n    #for loop")
+            #return {'status': 'ok', 'matches': ["for index in iterable):\n    #for loop"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+        elif 'while'.startswith(wrd):
+            matches.append("while(condition):\n    #while loop")
+            #return {'status': 'ok', 'matches': ["while(condition):\n    #while loop"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+        elif 'block'.startswith(wrd):
+            matches.append("block name:\n    #block")
+            #return {'status': 'ok', 'matches': ["block name:\n    #block"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+        elif 'case'.startswith(wrd):
+            matches.append("case variable:\nof value:\n    #then\nelse:\n    #else")
+            #return {'status': 'ok', 'matches': ["case variable:\nof value:\n    #then\nelse:\n    #else"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+        elif 'try'.startswith(wrd):
+            matches.append("try:\n    #something\nexcept exception:\n    #handle exception")
+            #return {'status': 'ok', 'matches': ["try:\n    #something\nexcept exception:\n    #handle exception"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+        elif 'template'.startswith(wrd):
+            matches.append("template name (arg:type): returnType =\n    #template")
+            #return {'status': 'ok', 'matches': ["template name (arg:type): returnType =\n    #template"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+        elif 'macro'.startswith(wrd):
+            matches.append("macro name (arg:type): returnType =\n    #macro")
+            #return {'status': 'ok', 'matches': ["macro name (arg:type): returnType =\n    #macro"],
+            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+                
+        
+        r = 'int float string addr and as asm atomic bind break cast concept ' \
             'const continue converter defer discard distinct div do ' \
             'elif else end enum except export finally for from func ' \
-            'generic if import in include interface is isnot iterator ' \
-            'let macro method mixin mod nil not notin object of or out ' \
-            'proc ptr raise ref return shl shr static template try ' \
-            'tuple type using var when while with without xor yield'.split()
-        return {'status': 'ok', 'matches': [t for t in r if t.startswith(wrd)],
-                'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
+            'generic import in include interface is isnot ' \
+            'let mixin mod nil not notin object of or out ' \
+            'ptr raise ref return shl shr static ' \
+            'tuple type using var when with without xor yield'.split()
+        
+        return {'status': 'ok', 'matches': matches+[t for t in r if t.startswith(wrd)],
+            'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
