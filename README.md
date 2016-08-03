@@ -40,3 +40,8 @@ This a simple proof of concept. It's not intended to be used in production in it
 ## License
 [MIT](LICENSE.txt)
 
+##Changelog
+
+- 03-08-2016 : `stisa` Added some snippets to completion ( e.g. : write `pr` then hit `tab` )
+- 02-08-2016 : `oderwat` Fixed temporary filenames being incompatible with nim
+- 02-08-2016 : Initial publish
