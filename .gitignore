@@ -8,6 +8,7 @@ MANIFEST
 *.egg-info/
 nimcache/
 tt.txt
+debug.txt
 cocoa.nim
 tests.ipynb
 cocoa.py

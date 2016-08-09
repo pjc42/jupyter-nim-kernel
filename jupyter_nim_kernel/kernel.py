@@ -94,10 +94,10 @@ class NimKernel(Kernel):
       # subprocess.call(['nim', 'c', '--verbosity:0', '--app:lib', msp, filepath])
       # subprocess.call(['gcc', filepath, '-std=c11', '-rdynamic', '-ldl', '-o', self.master_path])
 
-    def debug_to_file (self,msg, filename):
-    if (self.debug==True):
-        fsa = open(filename,'a')
-        fsa.write(str(msg))
+    def debug_to_file (self,msg, filename='C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\debug.txt'):
+        if (self.debug==True):
+            fsa = open(filename,'a')
+            fsa.write(str(msg))
 
     def cleanup_files(self):
         """Remove all the temporary files created by the kernel"""
@@ -194,7 +194,7 @@ class NimKernel(Kernel):
         while p.poll() is None:
             p.write_contents()
         p.write_contents()
-        debug_to_file(self.files,'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
+        #debug_to_file(self.files,'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
         if p.returncode != 0:
             self._write_to_stderr("[Nim kernel] Executable exited with code {}".format(p.returncode))
         return {'status': 'ok', 'execution_count': self.execution_count, 'payload': [], 'user_expressions': {}}
