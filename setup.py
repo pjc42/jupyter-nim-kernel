@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='jupyter_nim_kernel',
-      version='1.2',
+      version='1.3',
       description='Simple Nim kernel for Jupyter',
       author='stisa',
       author_email='silvio@stisa.space',

@@ -8,6 +8,14 @@ Look at [example-notebook](https://github.com/stisa/jupyter-nim-kernel/blob/mast
 **NOTE**: Context is **NOT** shared between blocks!!
 I'll try working on it when I have time.
 
+## Magics
+Currently implemented magics are:
+
+- `#>loadblock <num>` : load block `num` in the current block, automatically disables `echo` calls in loaded block.  
+Partial workaround for sharing context.
+- `#>passflag <someflag>` : pass a flag to the compiler, eg `--verbosity:3`, `--d:openblas` etc.  
+**Currently one flag per line**  
+
 ## Prereqs
 - a working `nim` installation ( [download](http://nim-lang.org/download.html) )
 - a working `jupyter` (and  **python 3^**) installation ( I recomend [miniconda3](http://conda.pydata.org/miniconda.html) and adding jupyter with `conda install jupyter` )
@@ -43,9 +51,5 @@ This a simple proof of concept. It's not intended to be used in production in it
 ## TODO
 - have a look at implementing [nimsuggest](https://github.com/nim-lang/nimsuggest)
 - share context between blocks ( or at least procs, maybe an internal file that adds all procs and then is included before compilation? )
-
-## Changelog
-
-- 03-08-2016 : `stisa` Added some snippets to completion ( e.g. : write `pr` then hit `tab` )
-- 02-08-2016 : `oderwat` Fixed temporary filenames being incompatible with nim
-- 02-08-2016 : Initial publish
+- ~~snippets~~
+- ~~basic completion~~
