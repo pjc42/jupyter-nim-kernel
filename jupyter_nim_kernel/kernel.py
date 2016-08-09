@@ -18,8 +18,6 @@ class RealTimeSubprocess(subprocess.Popen):
         :param write_to_stdout: a callable that will be called with chunks of data from stdout
         :param write_to_stderr: a callable that will be called with chunks of data from stderr
         """
-        #fsa = open('C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-nim-kernel\\tt.txt','a')
-        #fsa.write(str(cmd))
 
         self._write_to_stdout = write_to_stdout
         self._write_to_stderr = write_to_stderr
@@ -134,45 +132,37 @@ class NimKernel(Kernel):
 
     def compile_with_nimc(self, source_filename, binary_filename,additional=[]):
         #args = ['gcc', source_filename, '-std=c11', '-fPIC', '-shared', '-rdynamic', '-o', binary_filename]
-      #  debug_to_file([str(self.execution_count)+path.basename(f) for f in self.files if f.endswith('.nim')], 'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
         obf = '-o:'+binary_filename
         args = ['nim', 'c', '--hint[Processing]:off', '--verbosity:0', '-t:-fPIC', '-t:-shared']+additional+[obf, source_filename]
-        #debug_to_file(args,'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
         return self.create_jupyter_subprocess(args)
 
     def load_block(self, blockid):
         if self.execution_count!=blockid:
             if(len(self.sources)>=blockid ):
                 srccontent = open(self.sources[blockid-1], 'r').read().replace('echo','#echo') # comment out echos
-                #debug_to_file(srccontent,'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
                 return srccontent
             else:
                 self._write_to_stderr("[Nim kernel] Block "+str(blockid)+" not found")
         else: 
             self._write_to_stderr("[Nim kernel] You cannot load the block while you are executing it")
 
-    def do_execute(self, code, silent, store_history=True,
-                   user_expressions=None, allow_stdin=False):
+    def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
                    
-        other_args=[]
+        other_args=[] # List of additional commands to pass to the compiler
   
-        magiclines = [l for l in code.split('\n') if l.startswith('#>')]
-     #   debug_to_file('magiclines\n','C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
-     #   debug_to_file(magiclines,'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
-     #   debug_to_file('\n','C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
-        
+        magiclines = [l for l in code.split('\n') if l.startswith('#>')] # search for lines that use magics
+
+        # Execute magics
         for l in magiclines:
-            # Magic to load a block, takes 1 argument, the execution id of a block
+            # Magic to load a block, takes 1 argument, the execution id of a block #TODO: allow ranges of blocks?
             if l[0:11]=='#>loadblock':
                 blocktoload = int(l[11:].split()[0])
-      #          debug_to_file(blocktoload,'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
                 code = '\n'+self.load_block(blocktoload)+'\n'+code
             
             # Magic to pass flags directly to nim            
             elif l[0:10]=='#>passflag':
                 other_args.append(l[10:].replace(' ','')) # trim and append to commands TODO: if I avoid trimming, can we pass multiple flag in one line?
-            #debug_to_file(l[0:9],'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
-
+            
         # Compile code using a temp file
         with self.new_temp_file(suffix='.nim') as source_file:
             source_file.write(code)
@@ -189,12 +179,11 @@ class NimKernel(Kernel):
                     return {'status': 'ok', 'execution_count': self.execution_count, 'payload': [],
                             'user_expressions': {}}
 
-        # Run the compiled temp file
+        # Run the compiled temp file 
         p = self.create_jupyter_subprocess([binary_file.name]) #self.master_path,
         while p.poll() is None:
             p.write_contents()
         p.write_contents()
-        #debug_to_file(self.files,'C:\\Users\\silvio\\Documents\\Dev\\nim\\jupyter-kernel\\jupyter-nim-kernel\\tt.txt')
         if p.returncode != 0:
             self._write_to_stderr("[Nim kernel] Executable exited with code {}".format(p.returncode))
         return {'status': 'ok', 'execution_count': self.execution_count, 'payload': [], 'user_expressions': {}}
@@ -214,62 +203,40 @@ class NimKernel(Kernel):
             sl -= 1
         wrd = code[sw:cursor_pos]
 #        lin = code[sl:cursor_pos]
+
         # TODO: nimsuggest??
-        matches = []
+
+        matches = [] # list of all possible matches
+
+        # Snippets
         if 'proc'.startswith(wrd):
             matches.append("proc name(arg:type):returnType = \n    #proc")
-            #return {'status': 'ok', 'matches': ["proc name(arg:type):returnType = \n    #proc"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}            
         elif 'if'.startswith(wrd):
             matches.append("if (expression):\n    #then")
-            #return {'status': 'ok', 'matches': ["if (expression):\n    #then"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
         elif 'method'.startswith(wrd):
             matches.append("method name(arg:type): returnType = \n    #method")
-            #return {'status': 'ok', 'matches': ["method name(arg:type): returnType = \n    #method"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}            
         elif 'iterator'.startswith(wrd):
             matches.append("iterator name(arg:type): returnType = \n    #iterator")
-            #return {'status': 'ok', 'matches': ["iterator name(arg:type): returnType = \n    #iterator"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
         elif 'array'.startswith(wrd):
             matches.append("array[length, type]")
-            #return {'status': 'ok', 'matches': ["array[length, type]"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
         elif 'seq'.startswith(wrd):
             matches.append("seq[type]")
-            #return {'status': 'ok', 'matches': ["seq[type]"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
         elif 'for'.startswith(wrd):
             matches.append("for index in iterable):\n    #for loop")
-            #return {'status': 'ok', 'matches': ["for index in iterable):\n    #for loop"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
         elif 'while'.startswith(wrd):
             matches.append("while(condition):\n    #while loop")
-            #return {'status': 'ok', 'matches': ["while(condition):\n    #while loop"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
         elif 'block'.startswith(wrd):
             matches.append("block name:\n    #block")
-            #return {'status': 'ok', 'matches': ["block name:\n    #block"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
         elif 'case'.startswith(wrd):
             matches.append("case variable:\nof value:\n    #then\nelse:\n    #else")
-            #return {'status': 'ok', 'matches': ["case variable:\nof value:\n    #then\nelse:\n    #else"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
         elif 'try'.startswith(wrd):
             matches.append("try:\n    #something\nexcept exception:\n    #handle exception")
-            #return {'status': 'ok', 'matches': ["try:\n    #something\nexcept exception:\n    #handle exception"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
         elif 'template'.startswith(wrd):
             matches.append("template name (arg:type): returnType =\n    #template")
-            #return {'status': 'ok', 'matches': ["template name (arg:type): returnType =\n    #template"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
         elif 'macro'.startswith(wrd):
             matches.append("macro name (arg:type): returnType =\n    #macro")
-            #return {'status': 'ok', 'matches': ["macro name (arg:type): returnType =\n    #macro"],
-            #    'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
                 
-        
+        # Single word matches
         single = 'int float string addr and as asm atomic bind break cast concept ' \
             'const continue converter defer discard distinct div do ' \
             'elif else end enum except export finally for from func ' \
@@ -280,5 +247,8 @@ class NimKernel(Kernel):
 
         magics = ['#>loadblock ','#>passflag ']
         
-        return {'status': 'ok', 'matches': matches+[t for t in single if t.startswith(wrd)]+[mag for mag in magics if mag.startswith("#>")],
+        # Add all matches to our list
+        matches = matches+[t for t in single if t.startswith(wrd)]+[mag for mag in magics if mag.startswith(wrd)]
+
+        return {'status': 'ok', 'matches': matches,
             'cursor_start': sw, 'cursor_end': cursor_pos, 'metadata': {}}
