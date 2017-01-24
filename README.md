@@ -1,7 +1,9 @@
 # Minimal Nim kernel for Jupyter
 
 This is a rough adaptation of https://github.com/brendan-rius/jupyter-c-kernel .
-It's mostly functional, there are probably bugs lurking around.
+It's mostly functional, there are probably bugs lurking around.  
+
+**There's a nim based version, which I will be focusing work on, here : [Inim](https://github.com/stisa/INim)**   
 
 Look at [example-notebook](https://github.com/stisa/jupyter-nim-kernel/blob/master/example-notebook.ipynb) for some examples.
 
